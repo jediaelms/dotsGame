@@ -16,6 +16,10 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
 import java.util.Random;
 import java.util.Vector;
 import javax.swing.JComponent;
@@ -45,6 +49,9 @@ public class Field extends JComponent implements MouseInputListener {
 	private Box[][] box;
 	// Pseudo-random number generator
 	Random prng;
+	Socket localPlayerSocket;
+	DataInputStream veio_outro_player;
+	DataOutputStream manda_outro_player;
 
 	// color of the field background
 	private Color backgroundColor;
@@ -64,10 +71,12 @@ public class Field extends JComponent implements MouseInputListener {
 	 * @param userCounter counter for user's score
 	 */
 	public Field(int numCols, int numRows, CounterLabel userCount,
-			CounterLabel computerCount) {
+			CounterLabel computerCount, Socket localPlayerSocket, DataInputStream veio_outro_player, DataOutputStream manda_outro_player) {
 		// allow the super-class to initialize (JComponent)
 		super();
-
+		this.localPlayerSocket = localPlayerSocket; 
+		this.veio_outro_player = veio_outro_player;
+		this.manda_outro_player = manda_outro_player;
 		// save data
 		this.cols = numCols;
 		this.rows = numRows;
@@ -374,7 +383,12 @@ public class Field extends JComponent implements MouseInputListener {
 		// lookup line nearest to the mouse pointer
 		Line nearestLine = getNearestLine(e.getX(), e.getY());
 		// pass the event to state machine
-		this.state.mousePressed(nearestLine);
+		try {
+			this.state.mousePressed(nearestLine, this.manda_outro_player);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 
 	/**

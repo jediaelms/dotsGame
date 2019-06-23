@@ -11,6 +11,10 @@
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
+import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
 public class State implements ActionListener {
@@ -127,12 +131,13 @@ public class State implements ActionListener {
 	 * Called by field when mouse button is pressed down
 	 * 
 	 * @param nearestLine the mouse was pressed near this line
+	 * @throws IOException 
 	 */
-	public void mousePressed(Line nearestLine) {
+	public void mousePressed(Line nearestLine, DataOutputStream manda_outro_player) throws IOException {
 //		 System.out.println("State.mousePressed() " + this + " nearestLine="
 //		 + nearestLine);
 		 System.out.println("PLAY " + nearestLine.getOrientation() + " " + nearestLine.getCol() + " " + nearestLine.getRow());
-
+//		 manda_outro_player.writeUTF("PLAY " + nearestLine.getOrientation() + " " + nearestLine.getCol() + " " + nearestLine.getRow());
 		// WANDER
 		if (this.currentState == WANDER_STATE) {
 			// press was not near any line

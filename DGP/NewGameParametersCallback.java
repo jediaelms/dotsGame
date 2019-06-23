@@ -1,3 +1,7 @@
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
+
 /**
  * This interface defines a callback that user interface code can use to deliver
  * the parameters for the new game. (dialog box method calls this callback method)
@@ -17,5 +21,5 @@ public interface NewGameParametersCallback {
 	 * @param cols number of colums of boxes in new game
 	 * @param rows number of rows of boxes in new game
 	 */
-	public void newGameParameters(int cols, int rows);
+	public void newGameParameters(int cols, int rows, Socket localPlayerSocket, DataInputStream veio_outro_player, DataOutputStream manda_outro_player);
 }

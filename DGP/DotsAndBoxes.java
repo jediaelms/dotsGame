@@ -14,6 +14,12 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -24,7 +30,7 @@ import javax.swing.WindowConstants;
 public class DotsAndBoxes extends javax.swing.JFrame implements ActionListener {
 	// version number of this class, used for serialization
 	private static final long serialVersionUID = 1L;
-	// dialog box for starting a new game (normally hidden)
+	// dialog box for starting a Novo (normally hidden)
 	private NewGameDialog newGameDialog;
 	// the field of dots and lines
 	private Field field;
@@ -34,14 +40,14 @@ public class DotsAndBoxes extends javax.swing.JFrame implements ActionListener {
 	private CounterLabel computerCounterLabel;
 
 	// gameplay instructions
-	final String HOWTOPLAYTEXT = "How To Play\r\n" + "\r\n"
+	final String HOWTOPLAYTEXT = "Como jogar\r\n" + "\r\n"
 			+ "The game consists of a field of dots.  Take turns with the\r\n"
 			+ "computer adding lines between the dots.  Complete a box to\r\n"
 			+ "get another turn.  Your boxes will show O.  The computer's\r\n"
 			+ "boxes get X.  Complete the most boxes to win!\r\n";
 
-	// about box text
-	final String ABOUTTEXT = "Dots and Boxes is a Java program written by "
+	// Sobre box text
+	final String SobreTEXT = "Dots and Boxes is a Java program written by "
 			+ "Michael Leonhard.\r\n"
 			+ "\r\n"
 			+ "Michael is an undergraduate studying Computer Science at the\r\n"
@@ -57,24 +63,28 @@ public class DotsAndBoxes extends javax.swing.JFrame implements ActionListener {
 			+ "TA: Nitin Jindal\r\n"
 			+ "Created 9 Oct 2005 with\r\n"
 			+ "jdk-1.5.0.4 and Eclipse 3.1 on Windows XP";
-
+	Socket localPlayerSocket;
+	DataInputStream veio_outro_player;
+	DataOutputStream manda_outro_player;
 	/**
-	 * Set up a new game and show the frame
+	 * Set up a Novo and show the frame
 	 * 
 	 * @param linhas number of columns of dots
 	 * @param colunas number of linhas of dots
 	 */
-	public void newGame(int linhas, int colunas) {
+	public void newGame(int linhas, int colunas, Socket localPlayerSocket, DataInputStream veio_outro_player, DataOutputStream manda_outro_player) {
 		// reset the counters
 		this.userCounterLabel.reset();
 		this.computerCounterLabel.reset();
-
+		this.localPlayerSocket = localPlayerSocket; 
+		this.veio_outro_player = veio_outro_player;
+		this.manda_outro_player = manda_outro_player;
 		// if an old field exists, remove it
 		if (this.field != null) this.getContentPane().remove(this.field);
 
 		// create the new field
 		this.field = new Field(linhas, colunas, this.userCounterLabel,
-				this.computerCounterLabel);
+				this.computerCounterLabel, localPlayerSocket, veio_outro_player, manda_outro_player);
 		this.getContentPane().add(this.field);
 		this.getContentPane().validate();
 
@@ -87,12 +97,21 @@ public class DotsAndBoxes extends javax.swing.JFrame implements ActionListener {
 	 * makes an instance of the main game class and starts a game on it.
 	 * 
 	 * @param argv command line parameters (ignored)
+	 * @throws IOException 
+	 * @throws UnknownHostException 
 	 */
-	public static void main(String[] argv) {
+	public static void main(String[] argv) throws UnknownHostException, IOException {
 		// make an instance of the main game class
 		DotsAndBoxes instance = new DotsAndBoxes();
-		// start a new game
-		instance.newGame(1, 1);
+		// start a Novo
+//		int port = 10000;
+//	    String ServerIP = "192.168.0.106";
+//	    Socket localPlayerSocket = new Socket(ServerIP, port);
+//	    DataInputStream veio_outro_player = new DataInputStream(localPlayerSocket.getInputStream());
+//	    DataOutputStream manda_outro_player = new DataOutputStream(localPlayerSocket.getOutputStream());
+	    
+//		instance.newGame(5, 5, localPlayerSocket, veio_outro_player, manda_outro_player);
+	    instance.newGame(5, 5, null, null, null);
 	}
 
 	/**
@@ -104,10 +123,10 @@ public class DotsAndBoxes extends javax.swing.JFrame implements ActionListener {
 		// set up the window, menu, and status bar
 		initGUI();
 
-		// Anonymous object, gets called when user dispatches new game dialog
+		// Anonymous object, gets called when user dispatches Novo dialog
 		NewGameParametersCallback cback = new NewGameParametersCallback() {
-			public void newGameParameters(int linhas, int colunas) {
-				newGame(linhas, colunas);
+			public void newGameParameters(int linhas, int colunas, Socket localPlayerSocket, DataInputStream veio_outro_player, DataOutputStream manda_outro_player) {
+				newGame(linhas, colunas, localPlayerSocket, veio_outro_player, manda_outro_player);
 			}
 		};
 		// create the hidden dialog box
@@ -136,18 +155,18 @@ public class DotsAndBoxes extends javax.swing.JFrame implements ActionListener {
 			this.setJMenuBar(menuBar);
 
 			// Game menu
-			JMenu gameMenu = new JMenu("Game");
+			JMenu gameMenu = new JMenu("Jogo");
 			gameMenu.setMnemonic(java.awt.event.KeyEvent.VK_G);
 			menuBar.add(gameMenu);
 
-			// New Game menu item
-			JMenuItem newGameMenuItem = new JMenuItem("New Game");
+			// Novo menu item
+			JMenuItem newGameMenuItem = new JMenuItem("Novo");
 			newGameMenuItem.setMnemonic(java.awt.event.KeyEvent.VK_N);
 			newGameMenuItem.addActionListener(this);
 			gameMenu.add(newGameMenuItem);
 
 			// Exit menu item
-			JMenuItem exitMenuItem = new JMenuItem("Exit");
+			JMenuItem exitMenuItem = new JMenuItem("Desistir");
 			exitMenuItem.setMnemonic(java.awt.event.KeyEvent.VK_X);
 			exitMenuItem.addActionListener(this);
 			gameMenu.add(exitMenuItem);
@@ -157,17 +176,21 @@ public class DotsAndBoxes extends javax.swing.JFrame implements ActionListener {
 			helpMenu.setMnemonic(java.awt.event.KeyEvent.VK_H);
 			menuBar.add(helpMenu);
 
-			// How to Play menu item
-			JMenuItem howToPlayMenuItem = new JMenuItem("How to Play");
+			// Como jogar menu item
+			JMenuItem howToPlayMenuItem = new JMenuItem("Como jogar");
 			howToPlayMenuItem.setMnemonic(java.awt.event.KeyEvent.VK_P);
 			howToPlayMenuItem.addActionListener(this);
 			helpMenu.add(howToPlayMenuItem);
 
-			// About menu item
-			JMenuItem aboutMenuItem = new JMenuItem("About");
-			aboutMenuItem.setMnemonic(java.awt.event.KeyEvent.VK_A);
-			aboutMenuItem.addActionListener(this);
-			helpMenu.add(aboutMenuItem);
+			// Sobre menu item
+			JMenuItem SobreMenuItem = new JMenuItem("Sobre");
+			SobreMenuItem.setMnemonic(java.awt.event.KeyEvent.VK_A);
+			SobreMenuItem.addActionListener(this);
+			helpMenu.add(SobreMenuItem);
+			
+			JMenuItem mntmNewMenuItem = new JMenuItem("Sair");
+			mntmNewMenuItem.addActionListener(this);
+			menuBar.add(mntmNewMenuItem);
 		}
 
 		{// status bar
@@ -198,36 +221,42 @@ public class DotsAndBoxes extends javax.swing.JFrame implements ActionListener {
 	/**
 	 * Handles menu events. Implements ActionListener.actionPerformed().
 	 * 
-	 * @param e object with information about the event
+	 * @param e object with information Sobre the event
 	 */
 	public void actionPerformed(ActionEvent e) {
 		// System.out.println("actionPerformed: " + e.getActionCommand());
 
-		// New Game menu item was selected
-		if (e.getActionCommand().equals("New Game")) {
-			// show modal new game dialog box
+		// Novo menu item was selected
+		if (e.getActionCommand().equals("Novo")) {
+			// show modal Novo dialog box
 			newGameDialog.showDialog();
 		}
 
-		// How to Play menu item was selected
-		else if (e.getActionCommand().equals("How to Play")) {
+		// Como jogar menu item was selected
+		else if (e.getActionCommand().equals("Como jogar")) {
 			// show the instructional modal dialog box
-			JOptionPane.showMessageDialog(this, HOWTOPLAYTEXT, "How To Play",
+			JOptionPane.showMessageDialog(this, HOWTOPLAYTEXT, "Como jogar",
 					JOptionPane.PLAIN_MESSAGE);
 		}
 
-		// About menu item was selected
-		else if (e.getActionCommand().equals("About")) {
-			// show the modal about box
-			JOptionPane.showMessageDialog(this, ABOUTTEXT,
-					"About Dots and Boxes", JOptionPane.PLAIN_MESSAGE);
+		// Sobre menu item was selected
+		else if (e.getActionCommand().equals("Sobre")) {
+			// show the modal Sobre box
+			JOptionPane.showMessageDialog(this, SobreTEXT,
+					"Sobre Dots and Boxes", JOptionPane.PLAIN_MESSAGE);
 		}
 
 		// Exit menu item was selected
-		else if (e.getActionCommand().equals("Exit")) {
+		else if (e.getActionCommand().equals("Desistir")) {
 			// dispose of the main window. Java VM will exit if there are no
 			// other threads or windows.
 			this.dispose();
 		}
+		// Exit menu item was selected
+				else if (e.getActionCommand().equals("Sair")) {
+					// dispose of the main window. Java VM will exit if there are no
+					// other threads or windows.
+					this.dispose();
+				}
 	}
 }
