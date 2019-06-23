@@ -196,16 +196,18 @@ public class Field extends JComponent implements MouseInputListener {
 					// user made this box, so draw an O
 					if (this.box[col][row].isUserCompleted()) {
 						g.setColor(this.oColor);
-						g.fillOval(x + off, y + off, this.boxL - off2,
+						g.fillRect(x,y,boxL,boxL);
+						/*g.fillOval(x + off, y + off, this.boxL - off2,
 								this.boxL - off2);
 						g.setColor(this.backgroundColor);
 						g.fillOval(x + off2, y + off2, this.boxL - off2 * 2,
-								this.boxL - off2 * 2);
+								this.boxL - off2 * 2);*/
 					}
 					// computer made it, so drawn an X
 					else {
 						g.setColor(this.xColor);
-						g.fillOval(x + this.lineThickness, y
+						g.fillRect(x,y,boxL,boxL);
+						/*g.fillOval(x + this.lineThickness, y
 								+ this.lineThickness, this.boxL
 								- this.lineThickness * 2, this.boxL
 								- this.lineThickness * 2);
@@ -221,7 +223,7 @@ public class Field extends JComponent implements MouseInputListener {
 								- off2, 45, 90);
 						// south
 						g.fillArc(x + off, y + off2, this.boxL - off2,
-								this.boxL - off2, -135, 90);
+								this.boxL - off2, -135, 90);*/
 					}
 				}
 			}
